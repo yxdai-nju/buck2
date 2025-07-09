@@ -65,7 +65,6 @@ load("@prelude//rust/rust-analyzer:provider.bzl", "rust_analyzer_provider")
 load("@prelude//unix:providers.bzl", "UnixEnv", "create_unix_env_info")
 load(
     ":build.bzl",
-    "compile_context",
     "generate_rustdoc",
     "generate_rustdoc_coverage",
     "generate_rustdoc_test",
@@ -86,6 +85,7 @@ load(
     "CompileContext",  # @unused Used as a type
     "CrateName",  # @unused Used as a type
     "DepCollectionContext",
+    "compile_context",
 )
 load(
     ":link_info.bzl",
@@ -95,7 +95,6 @@ load(
     "RustLinkStrategyInfo",
     "RustProcMacroMarker",  # @unused Used as a type
     "attr_crate",
-    "attr_soname",
     "inherited_exported_link_deps",
     "inherited_link_group_lib_infos",
     "inherited_linkable_graphs",
@@ -507,16 +506,15 @@ def _link_infos(
             children = lib.extra_external_debug_info,
         )
         if output_style == LibOutputStyle("shared_lib"):
-            # TODO(pickett): Link against import library for windows
+            exported_shlib = lib.output
+
+            # Link against import library on Windows.
+            if lib.import_library:
+                exported_shlib = lib.import_library
+
             link_infos[output_style] = LinkInfos(
                 default = LinkInfo(
-                    linkables = [SharedLibLinkable(lib = lib.output)],
-                    external_debug_info = external_debug_info,
-                    pre_flags = ctx.attrs.exported_linker_flags,
-                    post_flags = ctx.attrs.exported_post_linker_flags,
-                ),
-                stripped = LinkInfo(
-                    linkables = [SharedLibLinkable(lib = lib.stripped_output)],
+                    linkables = [SharedLibLinkable(lib = exported_shlib)],
                     external_debug_info = external_debug_info,
                     pre_flags = ctx.attrs.exported_linker_flags,
                     post_flags = ctx.attrs.exported_post_linker_flags,
@@ -726,7 +724,7 @@ def _advanced_unstable_link_providers(
     solibs = {}
 
     # Add the shared library to the list of shared libs.
-    shlib_name = attr_soname(ctx)
+    shlib_name = compile_ctx.soname
 
     shared_lib_params = lang_style_param[(LinkageLang("native-unbundled"), LibOutputStyle("shared_lib"))]
     build_params = native_param_artifact[shared_lib_params]
@@ -897,7 +895,7 @@ def _native_link_providers(
     solibs = {}
 
     # Add the shared library to the list of shared libs.
-    shlib_name = attr_soname(ctx)
+    shlib_name = compile_ctx.soname
 
     # Only add a shared library if we generated one.
     # TODO(cjhopman): This is strange. Normally (like in c++) the link_infos passed to create_merged_link_info above would only have

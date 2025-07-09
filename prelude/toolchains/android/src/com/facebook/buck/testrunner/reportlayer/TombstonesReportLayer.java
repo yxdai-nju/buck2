@@ -33,9 +33,7 @@ public class TombstonesReportLayer extends ReportLayer {
   }
 
   @Override
-  public void initialize() {
-    System.out.println("TombstoneReportLayer initializing..., do nothing.");
-  }
+  public void initialize() {}
 
   @Override
   public void report() {
@@ -47,6 +45,9 @@ public class TombstonesReportLayer extends ReportLayer {
   }
 
   private void collectTombstones(IDevice device) throws Exception {
+    if (!this.runner.directoryExists(TOMBSTONE_REMOTE_PATH, device)) {
+      return;
+    }
     // get the tombstones from the device
     Path tmp = Files.createTempDirectory("ait-tombstones-");
     if (!Files.exists(tmp)) {

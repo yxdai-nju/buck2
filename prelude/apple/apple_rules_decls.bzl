@@ -33,7 +33,6 @@ load("@prelude//apple/user:apple_resource_bundle.bzl", "apple_resource_bundle_im
 load("@prelude//apple/user:apple_resource_transition.bzl", "apple_resource_transition")
 load("@prelude//apple/user:apple_selective_debugging.bzl", "SelectiveDebuggingJsonTypes", "apple_selective_debugging_impl")
 load("@prelude//apple/user:apple_spm_package.bzl", "apple_spm_package_impl")
-load("@prelude//apple/user:apple_toolchain_override.bzl", "apple_toolchain_override_impl")
 load("@prelude//apple/user:apple_watchos_bundle.bzl", "apple_watchos_bundle_impl")
 load("@prelude//apple/user:apple_xcframework.bzl", "apple_xcframework_impl", "framework_split_transition")
 load("@prelude//apple/user:cpu_split_transition.bzl", "cpu_split_transition")
@@ -41,7 +40,6 @@ load("@prelude//apple/user:macos_transition.bzl", "macos_transition")
 load("@prelude//apple/user:resource_group_map.bzl", "resource_group_map_impl")
 load("@prelude//apple/user:target_sdk_version_transition.bzl", "apple_test_target_sdk_version_transition", "target_sdk_version_transition")
 load("@prelude//apple/user:watch_transition.bzl", "watch_transition")
-load("@prelude//cxx:cxx_toolchain_types.bzl", "CxxToolchainInfo")
 load("@prelude//cxx:groups_types.bzl", "GroupFilterInfo", "Traversal")
 load("@prelude//cxx:link_groups_types.bzl", "LINK_GROUP_MAP_ATTR")
 load("@prelude//decls:common.bzl", "CxxRuntimeType", "CxxSourceType", "HeadersAsRawHeadersMode", "IncludeType", "LinkableDepType", "buck", "prelude_rule")
@@ -57,8 +55,13 @@ load(":apple_core_data.bzl", "apple_core_data_impl")
 load(":apple_library.bzl", "apple_library_impl")
 load(":apple_package.bzl", "apple_package_impl")
 load(":apple_resource.bzl", "apple_resource_impl")
+load(
+    ":apple_rules_impl_utility.bzl",
+    "apple_xcuitest_extra_attrs",
+)
 load(":apple_test.bzl", "apple_test_impl")
 load(":apple_toolchain.bzl", "apple_toolchain_impl")
+load(":apple_xcuitest.bzl", "apple_xcuitest_impl")
 load(":prebuilt_apple_framework.bzl", "prebuilt_apple_framework_impl")
 load(":scene_kit_assets.bzl", "scene_kit_assets_impl")
 
@@ -1363,16 +1366,6 @@ apple_watchos_bundle = prelude_rule(
     cfg = watch_transition,
 )
 
-apple_toolchain_override = prelude_rule(
-    name = "apple_toolchain_override",
-    impl = apple_toolchain_override_impl,
-    attrs = {
-        "base": attrs.toolchain_dep(providers = [AppleToolchainInfo]),
-        "cxx_toolchain": attrs.toolchain_dep(providers = [CxxToolchainInfo]),
-    },
-    is_toolchain_rule = True,
-)
-
 apple_resource_bundle = prelude_rule(
     name = "apple_resource_bundle",
     impl = apple_resource_bundle_impl,
@@ -1412,6 +1405,12 @@ resource_group_map = prelude_rule(
     },
 )
 
+apple_xcuitest = prelude_rule(
+    name = "apple_xcuitest",
+    impl = apple_xcuitest_impl,
+    attrs = apple_xcuitest_extra_attrs(),
+)
+
 apple_rules = struct(
     apple_asset_catalog = apple_asset_catalog,
     apple_binary = apple_binary,
@@ -1424,7 +1423,6 @@ apple_rules = struct(
     apple_test = apple_test,
     apple_toolchain = apple_toolchain,
     apple_toolchain_set = apple_toolchain_set,
-    apple_toolchain_override = apple_toolchain_override,
     apple_tools = apple_tools,
     apple_resource_bundle = apple_resource_bundle,
     apple_resource_dedupe_alias = apple_resource_dedupe_alias,
@@ -1435,6 +1433,7 @@ apple_rules = struct(
     apple_universal_executable = apple_universal_executable,
     apple_watchos_bundle = apple_watchos_bundle,
     apple_xcframework = apple_xcframework,
+    apple_xcuitest = apple_xcuitest,
     core_data_model = core_data_model,
     cxx_universal_executable = cxx_universal_executable,
     mockingbird_mock = mockingbird_mock,
